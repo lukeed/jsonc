@@ -6,12 +6,13 @@
  * @returns Valid JSON string with comments stripped and trailing commas removed
  */
 export function toJSON(input: string): string {
-	let result = "",
+	let parts: string[] = [],
+		next: number,
 		c: number;
-	let string = false,
-		escape = false;
 	let i = 0,
-		j = 0,
+		end = 0,
+		start = 0,
+		comma = -1,
 		len = input.length;
 
 	for (; i < len; i++) {
@@ -20,93 +21,52 @@ export function toJSON(input: string): string {
 		// track string state
 		// '"'
 		if (c === 34) {
-			if (escape) {
-				escape = false;
-				result += input[i];
+			for (i++; i < len; i++) {
+				c = input.charCodeAt(i);
+				// "\\"
+				if (c === 92) i++;
+				else if (c === 34) break;
+			}
+			comma = -1;
+			continue;
+		}
+
+		// ","
+		if (c === 44) {
+			parts.push(input.slice(start, i));
+			comma = parts.length;
+			parts.push(",");
+			start = i + 1;
+			continue;
+		}
+
+		// "}" or "]"
+		if (c === 125 || c === 93) {
+			if (comma !== -1) parts[comma] = " ";
+			comma = -1;
+			continue;
+		}
+
+		// "/"
+		if (c === 47 && i < len - 1) {
+			next = input.charCodeAt(i + 1);
+			// "//" or "/*"
+			if (next === 47 || next === 42) {
+				end = next === 47 ? input.indexOf("\n", i + 2) : input.indexOf("*/", i + 2);
+				end = end === -1 ? len : next === 47 ? end : end + 2;
+				parts.push(input.slice(start, i), input.slice(i, end).replace(/[^\t\n\r]/g, " "));
+				start = end;
+				i = end - 1;
 				continue;
 			}
-			string = !string;
-			result += input[i];
-			continue;
 		}
 
-		// track escape sequences
-		// "\\"
-		if (c === 92 && string) {
-			escape = !escape;
-			result += input[i];
-			continue;
-		}
-
-		escape = false;
-
-		if (string) {
-			// ignore special chars if within string
-		} else {
-			// "/"
-			if (c === 47) {
-				if (i < len - 1) {
-					// "//"
-					if (input.charCodeAt(i + 1) === 47) {
-						result += "  "; // Preserve spacing
-						for (i += 2; i < len; i++) {
-							c = input.charCodeAt(i);
-							// "\n"
-							if (c === 10) {
-								result += "\n";
-								break;
-							}
-							// "\t" or "\r"
-							if (c === 9 || c === 13) {
-								result += input[i];
-							} else {
-								result += " ";
-							}
-						}
-						continue;
-					}
-					// "/*"
-					if (input.charCodeAt(i + 1) === 42) {
-						result += "  ";
-
-						for (i += 2; i < len - 1; i++) {
-							c = input.charCodeAt(i);
-							// "*/"
-							if (c === 42 && input.charCodeAt(i + 1) === 47) {
-								result += "  ";
-								i++;
-								break;
-							}
-							// "\n" or "\t" or "\r"
-							if (c === 10 || c === 9 || c === 13) {
-								result += input[i];
-							} else {
-								result += " ";
-							}
-						}
-
-						continue;
-					}
-				}
-			}
-
-			// "}" or "]"
-			if (c === 125 || c === 93) {
-				for (j = result.length - 1; j >= 0; j--) {
-					c = result.charCodeAt(j);
-					if (c <= 32) continue;
-					if (c === 44) {
-						result = result.slice(0, j) + " " + result.slice(j + 1);
-					}
-					break;
-				}
-			}
-		}
-
-		result += input[i];
+		if (c > 32) comma = -1;
 	}
 
-	return result;
+	if (parts.length === 0) return input;
+	parts.push(input.slice(start));
+	return parts.join("");
 }
 
 export function parse<T>(str: string): T {

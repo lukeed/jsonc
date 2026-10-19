@@ -59,6 +59,20 @@ describe("jsonc", () => {
 			expect(parsed.b.c).toBe(3);
 		});
 
+		it("should remove trailing comma followed by comments", () => {
+			let output = JSONC.toJSON('{"a":[1, // one\n],"b":2, /* two */\n}');
+			let parsed = JSON.parse(output);
+			expect(parsed.a).toEqual([1]);
+			expect(parsed.b).toBe(2);
+		});
+
+		it("should preserve length with unterminated block comment", () => {
+			let input = '{"a":1} /* open';
+			let output = JSONC.toJSON(input);
+			expect(output.length).toBe(input.length);
+			expect(JSON.parse(output).a).toBe(1);
+		});
+
 		it("should preserve comments inside strings", () => {
 			let input = '{"key": "value with // comment"}';
 			let output = JSONC.toJSON(input);
