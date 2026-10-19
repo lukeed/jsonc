@@ -35,10 +35,26 @@ export function toJSON(input: string): string {
 
 		// ","
 		if (c === 44) {
+			for (end = i + 1; end < len && (c = input.charCodeAt(end)) <= 32; end++);
+			// "}" or "]"
+			if (end < len && (c === 125 || c === 93)) {
+				parts.push(input.slice(start, i), " ");
+				start = i + 1;
+				comma = -1;
+				i = end;
+				continue;
+			}
+			// not "/"
+			if (end < len && c !== 47) {
+				comma = -1;
+				i = end - 1;
+				continue;
+			}
 			parts.push(input.slice(start, i));
 			comma = parts.length;
 			parts.push(",");
 			start = i + 1;
+			i = end - 1;
 			continue;
 		}
 
