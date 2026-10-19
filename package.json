@@ -1,0 +1,12 @@
+{
+  "name": "jsonc",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "bun bench.ts && node bench.ts"
+  },
+  "devDependencies": {
+    "jsonc": "^3.0.0",
+    "mitata": "^1.0.34"
+  }
+}
