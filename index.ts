@@ -10,6 +10,7 @@
 export function toJSON(input: string): string {
 	let parts: string[] = [],
 		next: number,
+		text: string,
 		c: number;
 	let i = 0,
 		end = 0,
@@ -72,7 +73,11 @@ export function toJSON(input: string): string {
 			if (next === 47 || next === 42) {
 				end = next === 47 ? input.indexOf("\n", i + 2) : input.indexOf("*/", i + 2);
 				end = end === -1 ? len : next === 47 ? end : end + 2;
-				parts.push(input.slice(start, i), input.slice(i, end).replace(/[^\t\n\r]/g, " "));
+				text = input.slice(i, end);
+				parts.push(
+					input.slice(start, i),
+					/[\t\n\r]/.test(text) ? text.replace(/[^\t\n\r]/g, " ") : " ".repeat(end - i),
+				);
 				start = end;
 				i = end - 1;
 				continue;
