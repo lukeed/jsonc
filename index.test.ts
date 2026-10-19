@@ -131,6 +131,18 @@ describe("jsonc", () => {
 			expect(parsed.length).toBe(3);
 		});
 
+		it("should pass reviver to JSON.parse", () => {
+			let input = '{"a": 1, /* b */ "b": [2, 3,],}';
+			let keys: string[] = [];
+			let parsed = JSONC.parse<{ a: number; b: number[] }>(input, function (key, value) {
+				keys.push(key);
+				expect(this).toBeObject();
+				return typeof value === "number" ? value * 10 : value;
+			});
+			expect(parsed).toEqual({ a: 10, b: [20, 30] });
+			expect(keys).toEqual(["a", "0", "1", "b", ""]);
+		});
+
 		it("should throw on invalid JSON after conversion", () => {
 			let input = '{"key": }'; // Invalid, missing value
 			let threw = false;

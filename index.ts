@@ -4,6 +4,8 @@
  * @param input - The source JSONC string
  * @source https://github.com/tidwall/jsonc (MIT)
  * @returns Valid JSON string with comments stripped and trailing commas removed
+ * @example
+ * toJSON('{ "a": 1, // one\n}'); //=> '{ "a": 1        \n}'
  */
 export function toJSON(input: string): string {
 	let parts: string[] = [],
@@ -69,6 +71,15 @@ export function toJSON(input: string): string {
 	return parts.join("");
 }
 
-export function parse<T>(str: string): T {
-	return JSON.parse(toJSON(str));
+/**
+ * Parses a JSONC string into a value, like `JSON.parse` but with comments and trailing commas allowed.
+ * @param str - The source JSONC string
+ * @param reviver - Optional `JSON.parse` reviver, called for each key and value
+ * @returns The parsed value; `T` is not validated at runtime
+ * @example
+ * parse<{ a: number }>('{ "a": 1, // one\n}'); //=> { a: 1 }
+ * parse('[1, 2,]', (key, value) => (typeof value === "number" ? value * 2 : value)); //=> [2, 4]
+ */
+export function parse<T>(str: string, reviver?: (this: unknown, key: string, value: unknown) => unknown): T {
+	return JSON.parse(toJSON(str), reviver);
 }
