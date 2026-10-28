@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "bench": "bun bench.ts && node bench.ts"
+    "bench": "bun bench.ts && node bench.ts",
+    "memory": "bun memory.ts && node memory.ts"
   },
   "devDependencies": {
     "jsonc": "^3.0.0",
