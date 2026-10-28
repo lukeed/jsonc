@@ -118,3 +118,4 @@ Bytes allocated per call by `toJSON` on node:
 |---|---|
 | Blank comments with a regex replace of character runs instead of single characters | Slower on node, mixed on bun. |
 | Skip strings with `indexOf('"')` instead of a character loop | 4–14% slower on short strings, 6.5x (bun) and 8.5x (node) faster on strings of about 540 characters. Most JSONC input is config with short strings. |
+| Reuse one module-level parts array across calls | `length = 0` frees the backing store in V8, so allocation did not change. Writing by index, then `fill("")` after `join`, cut node allocations on repeated input (large 4.38 → 2.61 MB, dense 9.51 → 5.43 MB). But `length = n` shrinks the array when input size changes, so large and small inputs in turn saved only 4.41 → 4.19 MB. Speed changed by −13% (node small) to +9% (dense). The array also keeps its largest size alive between calls. |
