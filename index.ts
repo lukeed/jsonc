@@ -23,7 +23,6 @@ export function toJSON(input: string): string {
 		j = 0,
 		end = 0,
 		start = 0,
-		comma = -1,
 		len = input.length;
 
 	for (; i < len; i++) {
@@ -38,39 +37,26 @@ export function toJSON(input: string): string {
 				if (c === 92) i++;
 				else if (c === 34) break;
 			}
-			comma = -1;
 			continue;
 		}
 
 		// ","
 		if (c === 44) {
 			for (end = i + 1; end < len && (c = input.charCodeAt(end)) <= 32; end++);
+			// skip "//" and "/*" comments
+			for (j = end; j < len - 1 && c === 47; ) {
+				next = input.charCodeAt(j + 1);
+				if (next !== 47 && next !== 42) break;
+				j = next === 47 ? input.indexOf("\n", j + 2) : input.indexOf("*/", j + 2);
+				if (j === -1) break;
+				for (j += next === 47 ? 1 : 2; j < len && (c = input.charCodeAt(j)) <= 32; j++);
+			}
 			// "}" or "]"
-			if (end < len && (c === 125 || c === 93)) {
+			if (j < len && (c === 125 || c === 93)) {
 				parts.push(input.slice(start, i), " ");
 				start = i + 1;
-				comma = -1;
-				i = end;
-				continue;
 			}
-			// not "/"
-			if (end < len && c !== 47) {
-				comma = -1;
-				i = end - 1;
-				continue;
-			}
-			parts.push(input.slice(start, i));
-			comma = parts.length;
-			parts.push(",");
-			start = i + 1;
 			i = end - 1;
-			continue;
-		}
-
-		// "}" or "]"
-		if (c === 125 || c === 93) {
-			if (comma !== -1) parts[comma] = " ";
-			comma = -1;
 			continue;
 		}
 
@@ -101,7 +87,6 @@ export function toJSON(input: string): string {
 			}
 		}
 
-		if (c > 32) comma = -1;
 	}
 
 	if (parts.length === 0) return input;
