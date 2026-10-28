@@ -88,7 +88,6 @@ export function toJSON(input: string): string {
 				continue;
 			}
 		}
-
 	}
 
 	if (parts.length === 0) return input;
