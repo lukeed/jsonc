@@ -1,3 +1,10 @@
+let spaces = " ".repeat(64);
+
+function blank(size: number): string {
+	if (size > spaces.length) spaces = " ".repeat(size);
+	return spaces.slice(0, size);
+}
+
 /**
  * Converts JSONC (JSON with comments) to valid JSON per RFC8259.
  * Preserves line breaks and positions to maintain correct error reporting offsets.
@@ -10,9 +17,10 @@
 export function toJSON(input: string): string {
 	let parts: string[] = [],
 		next: number,
-		text: string,
+		run: number,
 		c: number;
 	let i = 0,
+		j = 0,
 		end = 0,
 		start = 0,
 		comma = -1,
@@ -73,12 +81,21 @@ export function toJSON(input: string): string {
 			if (next === 47 || next === 42) {
 				end = next === 47 ? input.indexOf("\n", i + 2) : input.indexOf("*/", i + 2);
 				end = end === -1 ? len : next === 47 ? end : end + 2;
-				text = input.slice(i, end);
-				parts.push(
-					input.slice(start, i),
-					/[\t\n\r]/.test(text) ? text.replace(/[^\t\n\r]/g, " ") : " ".repeat(end - i),
-				);
-				start = end;
+				for (run = j = i; j < end; j++) {
+					c = input.charCodeAt(j);
+					// "\t" or "\n" or "\r"
+					if (c === 9 || c === 10 || c === 13) {
+						if (j > run) {
+							parts.push(input.slice(start, run), blank(j - run));
+							start = j;
+						}
+						run = j + 1;
+					}
+				}
+				if (end > run) {
+					parts.push(input.slice(start, run), blank(end - run));
+					start = end;
+				}
 				i = end - 1;
 				continue;
 			}
