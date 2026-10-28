@@ -1,6 +1,8 @@
 let spaces = " ".repeat(64);
+const blanks = Array.from({ length: 64 }, (_, size) => spaces.slice(0, size));
 
 function blank(size: number): string {
+	if (size < 64) return blanks[size];
 	if (size > spaces.length) spaces = " ".repeat(size);
 	return spaces.slice(0, size);
 }
