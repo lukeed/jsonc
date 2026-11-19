@@ -160,11 +160,11 @@ function bytes(input: string): string {
 					for (j += 2; j < size && (c = buf[j]) !== 10 && c !== 13; j++);
 				} else if (next === 42) {
 					for (
-						j = buf.indexOf(42, j + 2);
-						j !== -1 && buf[j + 1] !== 47;
-						j = buf.indexOf(42, j + 1)
+						j = j + 2;
+						j < size - 1 && !(buf[j] === 42 && buf[j + 1] === 47);
+						j++
 					);
-					if (j === -1) break;
+					if (j >= size - 1) break;
 					j += 2;
 				} else break;
 				for (; j < size && (c = buf[j]) <= 32; j++);
@@ -193,11 +193,11 @@ function bytes(input: string): string {
 				);
 			} else if (next === 42) {
 				for (
-					end = buf.indexOf(42, i + 2);
-					end !== -1 && buf[end + 1] !== 47;
-					end = buf.indexOf(42, end + 1)
+					end = i + 2;
+					end < size - 1 && !(buf[end] === 42 && buf[end + 1] === 47);
+					end++
 				);
-				if (end === -1) break;
+				if (end >= size - 1) break;
 				end += 2;
 			} else continue;
 			if (w !== from) buf.copyWithin(w, from, i);
@@ -224,7 +224,7 @@ function bytes(input: string): string {
 	if (!edits) return input;
 	if (w !== from) buf.copyWithin(w, from, size);
 	w += size - from;
-	return decoder.decode(buf.subarray(0, w));
+	return decoder.decode(w === size ? buf : buf.subarray(0, w));
 }
 
 /**
