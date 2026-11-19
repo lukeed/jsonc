@@ -111,13 +111,9 @@ function slices(input: string): string {
 }
 
 function bytes(input: string): string {
-	let size = input.length,
-		buf = new Uint8Array(size);
-	if (encoder.encodeInto(input, buf).read < size) {
-		if (!input.isWellFormed()) return slices(input);
-		buf = encoder.encode(input);
+	let buf = encoder.encode(input),
 		size = buf.length;
-	}
+	if (size !== input.length && !input.isWellFormed()) return slices(input);
 
 	let edits = false,
 		next: number,
