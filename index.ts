@@ -54,10 +54,14 @@ export function toJSON(input: string): string {
 			// skip "//" and "/*" comments
 			for (j = end; j < len - 1 && c === 47; ) {
 				next = input.charCodeAt(j + 1);
-				if (next !== 47 && next !== 42) break;
-				j = next === 47 ? input.indexOf("\n", j + 2) : input.indexOf("*/", j + 2);
-				if (j === -1) break;
-				for (j += next === 47 ? 1 : 2; j < len && (c = input.charCodeAt(j)) <= 32; j++);
+				if (next === 47) {
+					for (j += 2; j < len && (c = input.charCodeAt(j)) !== 10 && c !== 13; j++);
+				} else if (next === 42) {
+					j = input.indexOf("*/", j + 2);
+					if (j === -1) break;
+					j += 2;
+				} else break;
+				for (; j < len && (c = input.charCodeAt(j)) <= 32; j++);
 			}
 			// "}" or "]"
 			if (j < len && (c === 125 || c === 93)) {
@@ -73,9 +77,13 @@ export function toJSON(input: string): string {
 			next = input.charCodeAt(i + 1);
 			// "//" or "/*"
 			if (next === 47 || next === 42) {
-				end = next === 47 ? input.indexOf("\n", i + 2) : input.indexOf("*/", i + 2);
-				if (end === -1 && next === 42) break;
-				end = end === -1 ? len : next === 47 ? end : end + 2;
+				if (next === 47) {
+					for (end = i + 2; end < len && (c = input.charCodeAt(end)) !== 10 && c !== 13; end++);
+				} else {
+					end = input.indexOf("*/", i + 2);
+					if (end === -1) break;
+					end += 2;
+				}
 				for (run = j = i; j < end; j++) {
 					c = input.charCodeAt(j);
 					// "\t" or "\n" or "\r"

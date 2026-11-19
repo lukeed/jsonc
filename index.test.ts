@@ -108,6 +108,13 @@ describe("jsonc", () => {
 			expect(JSONC.toJSON(' ﻿{"a":1}')).toBe(' ﻿{"a":1}');
 		});
 
+		it("should end line comment at a carriage return", () => {
+			let input = '{\r  // one\r  "a": 1, // two\r  "b": [2, // three\r  ], // four\r}';
+			let output = JSONC.toJSON(input);
+			expect(output.length).toBe(input.length);
+			expect(JSONC.parse(input)).toEqual({ a: 1, b: [2] });
+		});
+
 		it("should keep line comment that runs to the end", () => {
 			let output = JSONC.toJSON('{"a":1} // end');
 			expect(output).toBe('{"a":1}       ');
@@ -240,7 +247,7 @@ describe("jsonc", () => {
 			let input = '{"key": "value"} // comment\r\n{"next": "object"}';
 			let output = JSONC.toJSON(input);
 			// Should have carriage return preserved
-			expect(output).toContain("value");
+			expect(output).toBe('{"key": "value"}           \r\n{"next": "object"}');
 		});
 
 		it("should handle strings with escaped backslashes", () => {
