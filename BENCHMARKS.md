@@ -4,10 +4,12 @@ Speed and memory of this package against [`jsonc`](https://www.npmjs.com/package
 
 ## Setup
 
-- CPU: AMD EPYC 9V45 96-Core Processor, ~4.3 GHz, Linux 7.0.0
+- CPU: AMD EPYC 9V45 96-Core Processor, ~4.3 GHz, shared VM with 8 vCPUs, Linux 7.0.0
 - Runtimes: bun 1.4.3, node 26.12.0
 - Packages: jsonc 3.0.0, strip-json-comments 5.0.3, mitata 1.0.34
 - Options: `jsonc.parse(input, { allowTrailingCommas: true })` and `strip(input, { trailingCommas: true })`, so all libraries do the same work.
+
+Check the CPU load before each run, with `uptime` and `mpstat 1 3`. Other work on the machine changed results by up to 50%, also for code that did not change. Run only when the CPUs are at least 95% idle.
 
 Run:
 
@@ -30,27 +32,27 @@ All fixtures are in `fixtures.ts`.
 
 ## Results
 
-Results for commit `01d1494`. "Faster" and "less" are npm divided by local.
+Results for commit `384ad93`. The CPUs were 97–99% idle for all runs. "Faster" and "less" are npm divided by local.
 
 ### Speed: `parse`
 
 | fixture | bun local | bun npm:jsonc | faster | node local | node npm:jsonc | faster |
 |---|---|---|---|---|---|---|
-| small | 534 ns | 7.82 µs | 14.6x | 1.09 µs | 3.37 µs | 3.1x |
-| medium | 45.4 µs | 780 µs | 17.2x | 78.4 µs | 316 µs | 4.0x |
-| large | 2.18 ms | 63.4 ms | 29.1x | 3.69 ms | 19.9 ms | 5.4x |
-| plain | 1.40 ms | 41.9 ms | 29.9x | 2.48 ms | 15.9 ms | 6.4x |
-| dense | 3.90 ms | 104.4 ms | 26.8x | 6.86 ms | 38.7 ms | 5.6x |
+| small | 607 ns | 8.69 µs | 14.3x | 1.12 µs | 3.72 µs | 3.3x |
+| medium | 49.8 µs | 892 µs | 17.9x | 87.5 µs | 342 µs | 3.9x |
+| large | 2.36 ms | 83.7 ms | 35.5x | 3.91 ms | 22.9 ms | 5.8x |
+| plain | 1.41 ms | 47.5 ms | 33.7x | 2.55 ms | 18.5 ms | 7.3x |
+| dense | 4.21 ms | 135.8 ms | 32.3x | 8.05 ms | 44.7 ms | 5.6x |
 
 ### Speed: `toJSON`
 
 | fixture | bun local | bun strip-json-comments | faster | node local | node strip-json-comments | faster |
 |---|---|---|---|---|---|---|
-| small | 317 ns | 7.25 µs | 22.9x | 424 ns | 2.47 µs | 5.8x |
-| medium | 28.9 µs | 756 µs | 26.1x | 48.5 µs | 281 µs | 5.8x |
-| large | 1.46 ms | 44.0 ms | 30.2x | 2.08 ms | 15.9 ms | 7.6x |
-| plain | 629 µs | 35.4 ms | 56.3x | 962 µs | 13.1 ms | 13.6x |
-| dense | 3.13 ms | 87.8 ms | 28.0x | 5.50 ms | 35.3 ms | 6.4x |
+| small | 355 ns | 7.46 µs | 21.0x | 477 ns | 2.66 µs | 5.6x |
+| medium | 32.8 µs | 821 µs | 25.1x | 51.3 µs | 301 µs | 5.9x |
+| large | 1.49 ms | 55.1 ms | 37.0x | 2.26 ms | 18.5 ms | 8.2x |
+| plain | 618 µs | 41.9 ms | 67.8x | 1.03 ms | 15.2 ms | 14.8x |
+| dense | 3.29 ms | 98.6 ms | 30.0x | 6.28 ms | 39.2 ms | 6.2x |
 
 ### Memory: bytes allocated per call (node)
 
@@ -58,11 +60,11 @@ From V8's `total_allocated_bytes` counter, so the values are exact. Bun has no s
 
 | fixture | parse local | parse npm:jsonc | less | toJSON local | toJSON strip-json-comments | less |
 |---|---|---|---|---|---|---|
-| small | 1.0 KB | 7.2 KB | 7.2x | 765 B | 6.6 KB | 8.8x |
-| medium | 109 KB | 742 KB | 6.8x | 76 KB | 697 KB | 9.2x |
+| small | 1003 B | 7.2 KB | 7.4x | 747 B | 6.6 KB | 9.0x |
+| medium | 111 KB | 742 KB | 6.7x | 76 KB | 697 KB | 9.2x |
 | large | 5.61 MB | 36.0 MB | 6.4x | 4.38 MB | 34.0 MB | 7.8x |
 | plain | 1.19 MB | 29.3 MB | 24.6x | 3.0 KB | 27.3 MB | 9300x |
-| dense | 10.5 MB | 64.2 MB | 6.1x | 9.51 MB | 62.1 MB | 6.5x |
+| dense | 10.5 MB | 64.2 MB | 6.1x | 9.53 MB | 62.1 MB | 6.5x |
 
 For `plain`, `toJSON` returns the input unchanged, so it allocates almost nothing. `parse` then allocates only for `JSON.parse`.
 
@@ -72,16 +74,16 @@ One call in a fresh process, minus a process that only reads the input. Median o
 
 | fixture | runtime | parse local | parse npm:jsonc | toJSON local | toJSON strip-json-comments |
 |---|---|---|---|---|---|
-| large | bun | 14.3 MB | 42.5 MB | 12.9 MB | 40.6 MB |
-| large | node | 12.6 MB | 28.2 MB | 10.5 MB | 27.3 MB |
-| plain | bun | 6.6 MB | 36.6 MB | 4.3 MB | 34.0 MB |
-| plain | node | 6.7 MB | 19.2 MB | 4.7 MB | 17.2 MB |
-| dense | bun | 19.5 MB | 44.0 MB | 18.3 MB | 43.4 MB |
-| dense | node | 16.7 MB | 35.1 MB | 15.8 MB | 32.8 MB |
+| large | bun | 12.8 MB | 41.1 MB | 11.1 MB | 39.6 MB |
+| large | node | 12.8 MB | 28.4 MB | 11.1 MB | 27.5 MB |
+| plain | bun | 6.2 MB | 36.6 MB | 4.0 MB | 34.4 MB |
+| plain | node | 7.0 MB | 19.5 MB | 4.8 MB | 17.4 MB |
+| dense | bun | 18.5 MB | 46.0 MB | 16.7 MB | 45.4 MB |
+| dense | node | 17.7 MB | 35.2 MB | 16.7 MB | 33.4 MB |
 
 ## History
 
-Each optimization step, with results measured at that commit. Values are bun / node.
+Each optimization step, with results measured at that commit. Values are bun / node. The CPU load was not recorded for these runs, so treat differences under about 10% as noise.
 
 ### `parse` before the fixtures were added
 
@@ -111,6 +113,10 @@ Bytes allocated per call by `toJSON` on node:
 | `11a36a5` | 104 KB | 5.37 MB | 13.9 MB |
 | `5c06145` | 86 KB | 5.10 MB | 11.3 MB |
 | `01d1494` | 76 KB | 4.38 MB | 9.51 MB |
+
+### Bug fixes
+
+`83944e0` (keep unterminated `/*`), `d006892` (blank leading BOM), `911c626` (end `//` at `\r`) and `384ad93` (drop blank growth) were compared with `d72298c` in one process, with the CPUs 97% idle. All differences were within ±5% and went both ways, except `small`: the BOM check made it 3–8% slower on bun and about 2% slower on node (10–25 ns per call). Two other forms of the BOM check were no faster.
 
 ### Rejected
 
