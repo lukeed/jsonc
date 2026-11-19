@@ -9,7 +9,9 @@ for (let [name, input] of Object.entries(fixtures)) {
 	summary(() => {
 		group(`parse: ${name} (${input.length} chars)`, () => {
 			bench("local", () => local.parse(input));
-			bench("npm:jsonc", () => jsonc.parse(input, { allowTrailingCommas: true }));
+			bench("npm:jsonc", () =>
+				jsonc.parse(input, { allowTrailingCommas: true }),
+			);
 		});
 	});
 }
@@ -18,7 +20,9 @@ for (let [name, input] of Object.entries(fixtures)) {
 	summary(() => {
 		group(`toJSON: ${name} (${input.length} chars)`, () => {
 			bench("local", () => local.toJSON(input));
-			bench("npm:strip-json-comments", () => strip(input, { trailingCommas: true }));
+			bench("npm:strip-json-comments", () =>
+				strip(input, { trailingCommas: true }),
+			);
 		});
 	});
 }

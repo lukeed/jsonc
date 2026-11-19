@@ -85,7 +85,9 @@ describe("jsonc", () => {
 		});
 
 		it("should keep unterminated block comment", () => {
-			expect(JSONC.toJSON('{"a":1} // one\n/* open */ /* open')).toBe('{"a":1}       \n           /* open');
+			expect(JSONC.toJSON('{"a":1} // one\n/* open */ /* open')).toBe(
+				'{"a":1}       \n           /* open',
+			);
 			expect(JSONC.toJSON("/*")).toBe("/*");
 			expect(JSONC.toJSON("/*/")).toBe("/*/");
 		});
@@ -109,7 +111,8 @@ describe("jsonc", () => {
 		});
 
 		it("should end line comment at a carriage return", () => {
-			let input = '{\r  // one\r  "a": 1, // two\r  "b": [2, // three\r  ], // four\r}';
+			let input =
+				'{\r  // one\r  "a": 1, // two\r  "b": [2, // three\r  ], // four\r}';
 			let output = JSONC.toJSON(input);
 			expect(output.length).toBe(input.length);
 			expect(JSONC.parse(input)).toEqual({ a: 1, b: [2] });
@@ -119,7 +122,9 @@ describe("jsonc", () => {
 			for (let size of [62, 63, 64, 65, 1000]) {
 				let text = "x".repeat(size);
 				expect(JSONC.toJSON(`1 /*${text}*/`)).toBe(`1 ${" ".repeat(size + 4)}`);
-				expect(JSONC.toJSON(`1 //${text}\n`)).toBe(`1 ${" ".repeat(size + 2)}\n`);
+				expect(JSONC.toJSON(`1 //${text}\n`)).toBe(
+					`1 ${" ".repeat(size + 2)}\n`,
+				);
 			}
 		});
 
@@ -190,11 +195,14 @@ describe("jsonc", () => {
 		it("should pass reviver to JSON.parse", () => {
 			let input = '{"a": 1, /* b */ "b": [2, 3,],}';
 			let keys: string[] = [];
-			let parsed = JSONC.parse<{ a: number; b: number[] }>(input, function (key, value) {
-				keys.push(key);
-				expect(this).toBeObject();
-				return typeof value === "number" ? value * 10 : value;
-			});
+			let parsed = JSONC.parse<{ a: number; b: number[] }>(
+				input,
+				function (key, value) {
+					keys.push(key);
+					expect(this).toBeObject();
+					return typeof value === "number" ? value * 10 : value;
+				},
+			);
 			expect(parsed).toEqual({ a: 10, b: [20, 30] });
 			expect(keys).toEqual(["a", "0", "1", "b", ""]);
 		});

@@ -50,10 +50,14 @@ export function toJSON(input: string): string {
 		if (c === 44) {
 			for (end = i + 1; end < len && (c = input.charCodeAt(end)) <= 32; end++);
 			// skip "//" and "/*" comments
-			for (j = end; j < len - 1 && c === 47; ) {
+			for (j = end; j < len - 1 && c === 47;) {
 				next = input.charCodeAt(j + 1);
 				if (next === 47) {
-					for (j += 2; j < len && (c = input.charCodeAt(j)) !== 10 && c !== 13; j++);
+					for (
+						j += 2;
+						j < len && (c = input.charCodeAt(j)) !== 10 && c !== 13;
+						j++
+					);
 				} else if (next === 42) {
 					j = input.indexOf("*/", j + 2);
 					if (j === -1) break;
@@ -76,7 +80,11 @@ export function toJSON(input: string): string {
 			// "//" or "/*"
 			if (next === 47 || next === 42) {
 				if (next === 47) {
-					for (end = i + 2; end < len && (c = input.charCodeAt(end)) !== 10 && c !== 13; end++);
+					for (
+						end = i + 2;
+						end < len && (c = input.charCodeAt(end)) !== 10 && c !== 13;
+						end++
+					);
 				} else {
 					end = input.indexOf("*/", i + 2);
 					if (end === -1) break;
@@ -117,6 +125,9 @@ export function toJSON(input: string): string {
  * parse<{ a: number }>('{ "a": 1, // one\n}'); //=> { a: 1 }
  * parse('[1, 2,]', (key, value) => (typeof value === "number" ? value * 2 : value)); //=> [2, 4]
  */
-export function parse<T>(str: string, reviver?: (this: unknown, key: string, value: unknown) => unknown): T {
+export function parse<T>(
+	str: string,
+	reviver?: (this: unknown, key: string, value: unknown) => unknown,
+): T {
 	return JSON.parse(toJSON(str), reviver);
 }
