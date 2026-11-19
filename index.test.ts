@@ -81,13 +81,23 @@ describe("jsonc", () => {
 		});
 
 		it("should keep comma followed by unterminated comment", () => {
-			expect(JSONC.toJSON("[1, /* open")).toBe("[1,        ");
+			expect(JSONC.toJSON("[1, /* open")).toBe("[1, /* open");
 		});
 
-		it("should preserve length with unterminated block comment", () => {
-			let input = '{"a":1} /* open';
-			let output = JSONC.toJSON(input);
-			expect(output.length).toBe(input.length);
+		it("should keep unterminated block comment", () => {
+			expect(JSONC.toJSON('{"a":1} // one\n/* open */ /* open')).toBe('{"a":1}       \n           /* open');
+			expect(JSONC.toJSON("/*")).toBe("/*");
+			expect(JSONC.toJSON("/*/")).toBe("/*/");
+		});
+
+		it("should throw on unterminated block comment", () => {
+			expect(() => JSONC.parse('{"a":1} /* open')).toThrow();
+			expect(() => JSONC.parse('{"a": /* open 1}')).toThrow();
+		});
+
+		it("should keep line comment that runs to the end", () => {
+			let output = JSONC.toJSON('{"a":1} // end');
+			expect(output).toBe('{"a":1}       ');
 			expect(JSON.parse(output).a).toBe(1);
 		});
 

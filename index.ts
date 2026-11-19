@@ -68,6 +68,7 @@ export function toJSON(input: string): string {
 			// "//" or "/*"
 			if (next === 47 || next === 42) {
 				end = next === 47 ? input.indexOf("\n", i + 2) : input.indexOf("*/", i + 2);
+				if (end === -1 && next === 42) break;
 				end = end === -1 ? len : next === 47 ? end : end + 2;
 				for (run = j = i; j < end; j++) {
 					c = input.charCodeAt(j);
