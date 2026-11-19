@@ -7,6 +7,7 @@
     "memory": "bun memory.ts && node memory.ts"
   },
   "devDependencies": {
+    "@types/bun": "1.4.4",
     "jsonc": "^3.0.0",
     "mitata": "^1.0.34",
     "strip-json-comments": "^5.0.3"
