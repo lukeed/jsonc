@@ -1,7 +1,24 @@
 import { describe, expect, it } from "bun:test";
-import * as JSONC from "./index";
+import * as lib from "./index";
 
-describe("jsonc", () => {
+const pad = " ".repeat(600);
+
+describe.each([
+	["short", false],
+	["long", true],
+])("jsonc (%s input)", (_, long) => {
+	let JSONC = {
+		toJSON(input: string): string {
+			if (!long) return lib.toJSON(input);
+			let output = lib.toJSON(input + pad);
+			expect(output.slice(input.length)).toBe(pad);
+			return output.slice(0, input.length);
+		},
+		parse<T>(input: string, reviver?: Parameters<typeof lib.parse>[1]): T {
+			return lib.parse<T>(long ? input + pad : input, reviver);
+		},
+	};
+
 	describe("toJSON", () => {
 		it("should be a function", () => {
 			expect(typeof JSONC.toJSON).toBe("function");
@@ -128,6 +145,30 @@ describe("jsonc", () => {
 			}
 		});
 
+		it("should blank non-ASCII comments by UTF-16 unit", () => {
+			let input = '{"a":"é中😀", // é中😀\n"b":2, /* ü\n😀 */}';
+			let output = JSONC.toJSON(input);
+			expect(output).toBe('{"a":"é中😀",        \n"b":2      \n     }');
+			expect(JSONC.parse(input)).toEqual({ a: "é中😀", b: 2 });
+		});
+
+		it("should blank a leading BOM before non-ASCII", () => {
+			expect(JSONC.toJSON('\uFEFF{"中":1} // ü')).toBe(' {"中":1}     ');
+			expect(JSONC.parse('\uFEFF{"中":1} // ü')).toEqual({ 中: 1 });
+		});
+
+		it("should keep lone surrogates", () => {
+			expect(JSONC.toJSON('{"a":"\uD800"} // \uDC00')).toBe(
+				'{"a":"\uD800"}     ',
+			);
+			expect(JSONC.toJSON('["\uDBFF\uDFFF", /* \uD83D */]')).toBe(
+				'["\uDBFF\uDFFF"         ]',
+			);
+			expect(JSONC.parse<{ a: string }>('{"a":"\uD800"} // \uDC00').a).toBe(
+				"\uD800",
+			);
+		});
+
 		it("should keep line comment that runs to the end", () => {
 			let output = JSONC.toJSON('{"a":1} // end');
 			expect(output).toBe('{"a":1}       ');
@@ -164,10 +205,10 @@ describe("jsonc", () => {
 
 		it("should handle nested structures with comments", () => {
 			let input = `{
-  "outer": {
-    "inner": "value" // comment
-  } // outer comment
-}`;
+	  "outer": {
+	    "inner": "value" // comment
+	  } // outer comment
+	}`;
 			let output = JSONC.toJSON(input);
 			let parsed = JSON.parse(output);
 			expect(parsed.outer.inner).toBe("value");
@@ -286,12 +327,12 @@ describe("jsonc", () => {
 
 		it("should handle numbers in various formats", () => {
 			let input = `{
-  "int": 42,
-  "float": 3.14,
-  "exp": 1e10,
-  "neg": -100
-  // comment
-}`;
+	  "int": 42,
+	  "float": 3.14,
+	  "exp": 1e10,
+	  "neg": -100
+	  // comment
+	}`;
 			let parsed = JSONC.parse<{
 				int: number;
 				float: number;
@@ -305,10 +346,10 @@ describe("jsonc", () => {
 
 		it("should handle booleans and null", () => {
 			let input = `{
-  "bool_true": true,  // comment
-  "bool_false": false, /* comment */
-  "null_value": null
-}`;
+	  "bool_true": true,  // comment
+	  "bool_false": false, /* comment */
+	  "null_value": null
+	}`;
 			let parsed = JSONC.parse<{
 				bool_true: boolean;
 				bool_false: boolean;
@@ -321,9 +362,9 @@ describe("jsonc", () => {
 
 		it("should preserve position accuracy for error reporting", () => {
 			let input = `{
-  "line1": "value1",
-  "line2": "value2" // comment
-}`;
+	  "line1": "value1",
+	  "line2": "value2" // comment
+	}`;
 			let output = JSONC.toJSON(input);
 			let lines = output.split("\n");
 			expect(lines[1]).toContain("line1");
@@ -332,14 +373,14 @@ describe("jsonc", () => {
 
 		it("should handle deeply nested structures", () => {
 			let input = `{
-  "level1": {
-    "level2": {
-      "level3": {
-        "value": "deep" // deep comment
-      } // level3 comment
-    } // level2 comment
-  } // level1 comment
-} // root comment`;
+	  "level1": {
+	    "level2": {
+	      "level3": {
+	        "value": "deep" // deep comment
+	      } // level3 comment
+	    } // level2 comment
+	  } // level1 comment
+	} // root comment`;
 			let parsed = JSONC.parse<{
 				level1: { level2: { level3: { value: string } } };
 			}>(input);
@@ -348,10 +389,10 @@ describe("jsonc", () => {
 
 		it("should handle comments between array elements", () => {
 			let input = `[
-  1, // first
-  2, /* second */
-  3  // third
-]`;
+	  1, // first
+	  2, /* second */
+	  3  // third
+	]`;
 			let parsed = JSONC.parse<number[]>(input);
 			expect(parsed).toContain(1);
 			expect(parsed).toContain(2);
@@ -360,11 +401,11 @@ describe("jsonc", () => {
 
 		it("should handle key-value pairs with various comment positions", () => {
 			let input = `{
-  // comment before key
-  "key1": "value1",
-  "key2": /* comment in middle */ "value2",
-  "key3": "value3" // comment after value
-}`;
+	  // comment before key
+	  "key1": "value1",
+	  "key2": /* comment in middle */ "value2",
+	  "key3": "value3" // comment after value
+	}`;
 			let parsed = JSONC.parse<{
 				key1: string;
 				key2: string;
@@ -383,26 +424,26 @@ describe("jsonc", () => {
 
 		it("should handle block comment with star patterns", () => {
 			let input = `{
-  "key": "value" /* comment * with * stars */
-}`;
+	  "key": "value" /* comment * with * stars */
+	}`;
 			let parsed = JSONC.parse<{ key: string }>(input);
 			expect(parsed.key).toBe("value");
 		});
 
 		it("should handle realistic config file", () => {
 			let input = `{
-  // Database configuration
-  "database": {
-    "host": "localhost", // default host
-    "port": 5432,
-    "name": "mydb" /* production database name */
-  },
-  // Server settings
-  "server": {
-    "timeout": 3000,
-    "debug": true // enable debug mode
-  }, // trailing comma allowed
-}`;
+	  // Database configuration
+	  "database": {
+	    "host": "localhost", // default host
+	    "port": 5432,
+	    "name": "mydb" /* production database name */
+	  },
+	  // Server settings
+	  "server": {
+	    "timeout": 3000,
+	    "debug": true // enable debug mode
+	  }, // trailing comma allowed
+	}`;
 			let parsed = JSONC.parse<{
 				database: { host: string; port: number; name: string };
 				server: { timeout: number; debug: boolean };
@@ -414,10 +455,10 @@ describe("jsonc", () => {
 
 		it("should handle URLs and special strings", () => {
 			let input = `{
-  "url": "https://example.com/path?query=value&other=123",
-  "regex": "^[a-z]+$", // regex pattern
-  "path": "C:\\\\Program Files\\\\App" /* windows path */
-}`;
+	  "url": "https://example.com/path?query=value&other=123",
+	  "regex": "^[a-z]+$", // regex pattern
+	  "path": "C:\\\\Program Files\\\\App" /* windows path */
+	}`;
 			let parsed = JSONC.parse<{
 				url: string;
 				regex: string;
