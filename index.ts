@@ -27,6 +27,12 @@ export function toJSON(input: string): string {
 		start = 0,
 		len = input.length;
 
+	// BOM
+	if (input.charCodeAt(0) === 65279) {
+		parts.push(" ");
+		start = i = 1;
+	}
+
 	for (; i < len; i++) {
 		c = input.charCodeAt(i);
 

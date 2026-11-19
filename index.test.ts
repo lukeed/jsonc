@@ -95,6 +95,19 @@ describe("jsonc", () => {
 			expect(() => JSONC.parse('{"a": /* open 1}')).toThrow();
 		});
 
+		it("should blank a leading BOM", () => {
+			let input = '﻿{"a":1} // one';
+			let output = JSONC.toJSON(input);
+			expect(output).toBe(' {"a":1}       ');
+			expect(JSONC.parse(input)).toEqual({ a: 1 });
+			expect(JSONC.toJSON("﻿")).toBe(" ");
+		});
+
+		it("should keep a BOM that is not leading", () => {
+			expect(JSONC.toJSON('{"a":"﻿"}')).toBe('{"a":"﻿"}');
+			expect(JSONC.toJSON(' ﻿{"a":1}')).toBe(' ﻿{"a":1}');
+		});
+
 		it("should keep line comment that runs to the end", () => {
 			let output = JSONC.toJSON('{"a":1} // end');
 			expect(output).toBe('{"a":1}       ');
