@@ -35,6 +35,15 @@ let dense = `{
 			"y": null, }, // end nested
 	}`;
 
+let unicode = `{
+		// élément 中文 😀
+		"id": 123,
+		"name": "naïve \\"café\\" 東京 😀",
+		/* résumé
+		   日本語 */
+		"tags": ["ä", "ö", "ü",],
+	}`;
+
 let large = `[\n\t${Array(5000).fill(item).join(",\n\t")},\n]`;
 
 export const fixtures = {
@@ -43,4 +52,5 @@ export const fixtures = {
 	large,
 	plain: JSON.stringify(JSON.parse(local.toJSON(large)), null, "\t"),
 	dense: `[\n\t${Array(5000).fill(dense).join(",\n\t")},\n]`,
+	unicode: `[\n\t${Array(5000).fill(unicode).join(",\n\t")},\n]`,
 };
