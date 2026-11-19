@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as lib from "./index";
 
-const pad = " ".repeat(600);
+const pad = " ".repeat(2100);
 
 describe.each([
 	["short", false],

@@ -237,7 +237,7 @@ function bytes(input: string): string {
  * toJSON('{ "a": 1, // one\n}'); //=> '{ "a": 1        \n}'
  */
 export function toJSON(input: string): string {
-	return input.length < 512 ? slices(input) : bytes(input);
+	return input.length < 2048 ? slices(input) : bytes(input);
 }
 
 /**
