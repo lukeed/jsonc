@@ -169,6 +169,12 @@ describe.each([
 			);
 		});
 
+		it("should keep a slash that does not start a comment", () => {
+			expect(JSONC.toJSON("[1, /x]")).toBe("[1, /x]");
+			expect(JSONC.toJSON('{"a": 1 / 2}')).toBe('{"a": 1 / 2}');
+			expect(() => JSONC.parse("[1, /x]")).toThrow();
+		});
+
 		it("should keep line comment that runs to the end", () => {
 			let output = JSONC.toJSON('{"a":1} // end');
 			expect(output).toBe('{"a":1}       ');
