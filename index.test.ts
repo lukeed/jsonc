@@ -115,6 +115,14 @@ describe("jsonc", () => {
 			expect(JSONC.parse(input)).toEqual({ a: 1, b: [2] });
 		});
 
+		it("should blank comments of any length", () => {
+			for (let size of [62, 63, 64, 65, 1000]) {
+				let text = "x".repeat(size);
+				expect(JSONC.toJSON(`1 /*${text}*/`)).toBe(`1 ${" ".repeat(size + 4)}`);
+				expect(JSONC.toJSON(`1 //${text}\n`)).toBe(`1 ${" ".repeat(size + 2)}\n`);
+			}
+		});
+
 		it("should keep line comment that runs to the end", () => {
 			let output = JSONC.toJSON('{"a":1} // end');
 			expect(output).toBe('{"a":1}       ');
