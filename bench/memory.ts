@@ -38,7 +38,14 @@ if (file && name) {
 
 let { fixtures } = await import("./fixtures.ts");
 let dir = mkdtempSync(join(tmpdir(), "jsonc-memory-"));
-let exact = !process.versions.bun;
+let total = () => {
+	let stats = getHeapStatistics();
+	return "total_allocated_bytes" in stats &&
+		typeof stats.total_allocated_bytes === "number"
+		? stats.total_allocated_bytes
+		: undefined;
+};
+let exact = !process.versions.bun && total() !== undefined;
 
 let bytes = (n: number) =>
 	n < 1024
@@ -61,16 +68,16 @@ let peak = (file: string, name: string) => {
 
 let allocated = (fn: () => unknown, runs: number) => {
 	for (let n = 0; n < 20; n++) fn();
-	let before = getHeapStatistics().total_allocated_bytes;
+	let before = total() ?? 0;
 	for (let n = 0; n < runs; n++) fn();
-	return (getHeapStatistics().total_allocated_bytes - before) / runs;
+	return ((total() ?? 0) - before) / runs;
 };
 
 console.log(
 	`runtime: ${process.versions.bun ? `bun ${process.versions.bun}` : `node ${process.version}`}`,
 );
 if (exact) console.log("allocated: bytes allocated per call");
-else console.log("allocated: skipped, bun has no exact allocation counter");
+else console.log("allocated: skipped, no exact allocation counter here");
 console.log(
 	"peak: extra peak RSS for one call in a fresh process, median of 5, inputs over 100K chars\n",
 );

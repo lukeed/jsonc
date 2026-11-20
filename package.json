@@ -1,12 +1,43 @@
 {
-  "name": "jsonc",
-  "private": true,
   "type": "module",
+  "version": "0.0.0",
+  "name": "@lukeed/jsonc",
+  "repository": "lukeed/jsonc",
+  "description": "A fast JSONC parser that keeps source positions",
+  "license": "MIT",
+  "author": {
+    "name": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com"
+  },
   "scripts": {
+    "build": "bun build.ts",
     "bench": "bun run --cwd bench"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "jsonc",
+    "json",
+    "comments",
+    "parse",
+    "trailing-commas"
+  ],
   "devDependencies": {
-    "@types/bun": "1.4.4"
+    "@types/bun": "1.4.4",
+    "@types/node": "22.20.5",
+    "typescript": "7.0.2"
   },
   "workspaces": [
     "bench"
