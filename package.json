@@ -3,13 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "bench": "bun bench.ts && node bench.ts",
-    "memory": "bun memory.ts && node memory.ts"
+    "bench": "bun run --cwd bench"
   },
   "devDependencies": {
-    "@types/bun": "1.4.4",
-    "jsonc": "^3.0.0",
-    "mitata": "^1.0.34",
-    "strip-json-comments": "^5.0.3"
-  }
+    "@types/bun": "1.4.4"
+  },
+  "workspaces": [
+    "bench"
+  ]
 }

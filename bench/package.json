@@ -1,0 +1,14 @@
+{
+  "name": "bench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "speed": "bun index.ts && node index.ts",
+    "memory": "bun memory.ts && node memory.ts"
+  },
+  "devDependencies": {
+    "jsonc": "3.0.0",
+    "mitata": "1.0.34",
+    "strip-json-comments": "5.0.3"
+  }
+}

@@ -5,17 +5,19 @@ Speed and memory of this package against [`jsonc`](https://www.npmjs.com/package
 ## Setup
 
 - CPU: AMD EPYC 9V45 96-Core Processor, ~4.3 GHz, shared VM with 8 vCPUs, Linux 7.0.0
-- Runtimes: bun 1.4.3, node 26.12.0
+- Runtimes: bun 1.4.4, node 26.13.1 for the results below. History rows up to `384ad93` used bun 1.4.3 and node 26.12.0.
 - Packages: jsonc 3.0.0, strip-json-comments 5.0.3, mitata 1.0.34
 - Options: `jsonc.parse(input, { allowTrailingCommas: true })` and `strip(input, { trailingCommas: true })`, so all libraries do the same work.
 
 Check the CPU load before each run, with `uptime` and `mpstat 1 3`. Other work on the machine changed results by up to 50%, also for code that did not change. Run only when the CPUs are at least 95% idle.
 
-Run:
+This directory is the `bench` workspace. `index.ts` measures speed, `memory.ts` measures memory, and `fixtures.ts` has the inputs. The other libraries are dev dependencies in `package.json`.
+
+Run from the project root:
 
 ```sh
-bun run bench    # speed, bun then node
-bun run memory   # memory, bun then node
+bun run bench speed    # bun, then node
+bun run bench memory   # bun, then node
 ```
 
 ## Fixtures

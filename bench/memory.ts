@@ -12,7 +12,7 @@ import { getHeapStatistics } from "node:v8";
 import { jsonc } from "jsonc";
 import strip from "strip-json-comments";
 
-import * as local from "./index.ts";
+import * as local from "../index.ts";
 
 const cases: Record<string, (input: string) => unknown> = {
 	"parse: local": (input) => local.parse(input),
