@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "name": "@lukeed/jsonc",
   "repository": "lukeed/jsonc",
   "description": "A fast JSONC parser that keeps source positions",
