@@ -3,12 +3,12 @@ name: CI
 on:
   push:
     paths-ignore:
-      - "*.md"
+      - "**.md"
     branches:
       - main
   pull_request:
     paths-ignore:
-      - "*.md"
+      - "**.md"
     branches:
       - main
 
