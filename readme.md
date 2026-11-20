@@ -63,21 +63,46 @@ Node.js 22 and newer, and Bun. In browsers, it needs `TextEncoder`, `TextDecoder
 
 ## Benchmarks
 
-> Bun 1.4.4 and Node.js 26.13.1, on a shared VM with 8 vCPUs (AMD EPYC 9V45), 2026-11-20. See [`bench/readme.md`](bench/readme.md) for every fixture, memory, and history.
+> Bun 1.4.4 and Node.js 26.13.1, on a shared VM with 8 vCPUs (AMD EPYC 9V45), 2026-11-20. Time is per call. Memory is the extra peak RSS of one call, Bun / Node; `–` means the input is too small to measure. `strip-json-comments` only does what `toJSON()` does. See [`bench/readme.md`](bench/readme.md) for every fixture and the full history.
 
-| `toJSON()` vs `strip-json-comments` | Bun                | Node.js            |
-| ----------------------------------- | ------------------ | ------------------ |
-| small (191 chars)                   | 282 ns vs 7.79 µs  | 328 ns vs 2.66 µs  |
-| medium (18 KB)                      | 16.9 µs vs 833 µs  | 23.4 µs vs 298 µs  |
-| large (905 KB)                      | 805 µs vs 51.1 ms  | 1.25 ms vs 17.7 ms |
-| unicode (625 KB)                    | 1.25 ms vs 34.8 ms | 1.97 ms vs 14.1 ms |
+```txt
+Code size (gzip)
+  @lukeed/jsonc                        791 B
+  strip-json-comments                  579 B
+  jsonc                             11,834 B
 
-| `parse()` vs `jsonc` | Bun                | Node.js            |
-| -------------------- | ------------------ | ------------------ |
-| small (191 chars)    | 440 ns vs 8.63 µs  | 974 ns vs 3.79 µs  |
-| medium (18 KB)       | 35.6 µs vs 907 µs  | 57.0 µs vs 343 µs  |
-| large (905 KB)       | 1.69 ms vs 80.8 ms | 3.12 ms vs 22.1 ms |
-| unicode (625 KB)     | 1.88 ms vs 49.9 ms | 2.86 ms vs 15.2 ms |
+parse :: 191 B input                       Bun      Node           Memory
+  @lukeed/jsonc                        0.44 µs   0.97 µs                –
+  jsonc                                8.63 µs   3.79 µs                –
+
+parse :: 18 KB input                       Bun      Node           Memory
+  @lukeed/jsonc                        35.6 µs   57.0 µs                –
+  jsonc                               906.6 µs  343.4 µs                –
+
+parse :: 905 KB input                      Bun      Node           Memory
+  @lukeed/jsonc                        1.69 ms   3.12 ms    9.5 /  3.7 MB
+  jsonc                               80.82 ms  22.05 ms   40.7 / 23.4 MB
+
+parse :: 625 KB non-ASCII input            Bun      Node           Memory
+  @lukeed/jsonc                        1.88 ms   2.86 ms    9.2 /  3.9 MB
+  jsonc                               49.89 ms  15.18 ms   42.2 / 20.2 MB
+
+toJSON :: 191 B input                      Bun      Node           Memory
+  @lukeed/jsonc                        0.28 µs   0.33 µs                –
+  strip-json-comments                  7.79 µs   2.66 µs                –
+
+toJSON :: 18 KB input                      Bun      Node           Memory
+  @lukeed/jsonc                        16.9 µs   23.4 µs                –
+  strip-json-comments                 832.5 µs  298.4 µs                –
+
+toJSON :: 905 KB input                     Bun      Node           Memory
+  @lukeed/jsonc                        0.80 ms   1.25 ms    7.4 /  2.8 MB
+  strip-json-comments                 51.05 ms  17.67 ms   38.6 / 22.6 MB
+
+toJSON :: 625 KB non-ASCII input           Bun      Node           Memory
+  @lukeed/jsonc                        1.25 ms   1.97 ms    7.4 /  3.6 MB
+  strip-json-comments                 34.83 ms  14.13 ms   40.6 / 18.0 MB
+```
 
 ## Credits
 
