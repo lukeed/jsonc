@@ -41,11 +41,6 @@ jobs:
       - run: bun test --coverage
       - run: bun run build
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: dist
-          path: dist
-
   node:
     name: Node.js v${{ matrix.nodejs }}
     needs: check
@@ -65,11 +60,8 @@ jobs:
         with:
           node-version: ${{ matrix.nodejs }}
 
-      - run: bun install --frozen-lockfile --production
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: dist
-          path: dist
+      - run: bun install --frozen-lockfile
+      - run: bun run build
 
       - name: Import
         run: |
@@ -96,14 +88,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+          no-cache: true
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: dist
-          path: dist
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build
 
       - name: Check version
         run: |
