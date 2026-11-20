@@ -1,4 +1,4 @@
-import * as local from "../index.ts";
+import * as local from "../src/index.ts";
 
 let small = `{
 	// compiler options

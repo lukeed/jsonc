@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["*.ts", "bench/*.ts"]
+  "include": ["src", "bench", "build.ts"]
 }

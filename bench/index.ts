@@ -2,7 +2,7 @@ import { bench, group, run, summary } from "mitata";
 import { jsonc } from "jsonc";
 import strip from "strip-json-comments";
 
-import * as local from "../index.ts";
+import * as local from "../src/index.ts";
 import { fixtures } from "./fixtures.ts";
 
 for (let [name, input] of Object.entries(fixtures)) {
