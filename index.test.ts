@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as lib from "./index";
 
-const pad = " ".repeat(2100);
+const pad = " ".repeat(6000);
 
 describe.each([
 	["short", false],
@@ -155,6 +155,23 @@ describe.each([
 		it("should blank a leading BOM before non-ASCII", () => {
 			expect(JSONC.toJSON('\uFEFF{"中":1} // ü')).toBe(' {"中":1}     ');
 			expect(JSONC.parse('\uFEFF{"中":1} // ü')).toEqual({ 中: 1 });
+		});
+
+		it("should keep lone surrogates next to surrogate pairs", () => {
+			let input =
+				'{"a":"😀\uD800😀", /* 😀\uDC00 */ "b":"\uDC00😀",} // \uD800';
+			let output = JSONC.toJSON(input);
+			expect(output).toBe('{"a":"😀\uD800😀",           "b":"\uDC00😀" }     ');
+			expect(JSONC.parse(input)).toEqual({ a: "😀\uD800😀", b: "\uDC00😀" });
+		});
+
+		it("should not reuse bytes from a previous call", () => {
+			let long = '{"a": "' + "x".repeat(4000) + '", /* c */}';
+			expect(JSONC.toJSON(long)).toBe(long.replace(", /* c */", "         "));
+			expect(JSONC.toJSON("1 // a")).toBe("1     ");
+			expect(JSONC.toJSON("")).toBe("");
+			expect(JSONC.toJSON("é /* ü */")).toBe("é        ");
+			expect(JSONC.toJSON("\uFEFF")).toBe(" ");
 		});
 
 		it("should keep lone surrogates", () => {

@@ -1,119 +1,40 @@
 const encoder = new TextEncoder();
-const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
+const decoder = new TextDecoder();
+const shared = new Uint8Array(16384);
 
-const spaces = " ".repeat(64);
-const blanks = Array.from({ length: 64 }, (_, size) => spaces.slice(0, size));
-
-function blank(size: number): string {
-	return size < 64 ? blanks[size] : " ".repeat(size);
-}
-
-function slices(input: string): string {
+/** Puts back the lone surrogates that TextEncoder replaced with U+FFFD. */
+function restore(input: string, output: string): string {
 	let parts: string[] = [],
-		next: number,
-		run: number,
-		c: number;
-	let i = 0,
-		j = 0,
-		end = 0,
 		start = 0,
-		len = input.length;
-
-	// BOM
-	if (input.charCodeAt(0) === 65279) {
-		parts.push(" ");
-		start = i = 1;
-	}
-
-	for (; i < len; i++) {
+		c = 0;
+	for (let i = 0; i < input.length; i++) {
 		c = input.charCodeAt(i);
-
-		// track string state
-		// '"'
-		if (c === 34) {
-			for (i++; i < len; i++) {
-				c = input.charCodeAt(i);
-				// "\\"
-				if (c === 92) i++;
-				else if (c === 34) break;
-			}
+		if (c < 0xd800 || c > 0xdfff) continue;
+		if (c < 0xdc00 && (input.charCodeAt(i + 1) & 0xfc00) === 0xdc00) {
+			i++;
 			continue;
 		}
-
-		// ","
-		if (c === 44) {
-			for (end = i + 1; end < len && (c = input.charCodeAt(end)) <= 32; end++);
-			// skip "//" and "/*" comments
-			for (j = end; j < len - 1 && c === 47;) {
-				next = input.charCodeAt(j + 1);
-				if (next === 47) {
-					for (
-						j += 2;
-						j < len && (c = input.charCodeAt(j)) !== 10 && c !== 13;
-						j++
-					);
-				} else if (next === 42) {
-					j = input.indexOf("*/", j + 2);
-					if (j === -1) break;
-					j += 2;
-				} else break;
-				for (; j < len && (c = input.charCodeAt(j)) <= 32; j++);
-			}
-			// "}" or "]"
-			if (j < len && (c === 125 || c === 93)) {
-				parts.push(input.slice(start, i), " ");
-				start = i + 1;
-			}
-			i = end - 1;
-			continue;
-		}
-
-		// "/"
-		if (c === 47 && i < len - 1) {
-			next = input.charCodeAt(i + 1);
-			// "//" or "/*"
-			if (next === 47 || next === 42) {
-				if (next === 47) {
-					for (
-						end = i + 2;
-						end < len && (c = input.charCodeAt(end)) !== 10 && c !== 13;
-						end++
-					);
-				} else {
-					end = input.indexOf("*/", i + 2);
-					if (end === -1) break;
-					end += 2;
-				}
-				for (run = j = i; j < end; j++) {
-					c = input.charCodeAt(j);
-					// "\t" or "\n" or "\r"
-					if (c === 9 || c === 10 || c === 13) {
-						if (j > run) {
-							parts.push(input.slice(start, run), blank(j - run));
-							start = j;
-						}
-						run = j + 1;
-					}
-				}
-				if (end > run) {
-					parts.push(input.slice(start, run), blank(end - run));
-					start = end;
-				}
-				i = end - 1;
-				continue;
-			}
-		}
+		if (output.charCodeAt(i) !== 0xfffd) continue;
+		parts.push(output.slice(start, i), input[i]);
+		start = i + 1;
 	}
-
-	if (parts.length === 0) return input;
-	parts.push(input.slice(start));
+	parts.push(output.slice(start));
 	return parts.join("");
 }
 
-function bytes(input: string): string {
-	let buf = encoder.encode(input),
-		size = buf.length;
-	if (size !== input.length && !input.isWellFormed()) return slices(input);
+/**
+ * Converts JSONC (JSON with comments) to valid JSON per RFC8259.
+ * Preserves line breaks and positions to maintain correct error reporting offsets.
+ * @param input - The source JSONC string
+ * @source https://github.com/tidwall/jsonc (MIT)
+ * @returns Valid JSON string with comments stripped and trailing commas removed
+ * @example
+ * toJSON('{ "a": 1, // one\n}'); //=> '{ "a": 1        \n}'
+ */
+export function toJSON(input: string): string {
+	let small = input.length * 3 <= shared.length,
+		buf = small ? shared : encoder.encode(input),
+		size = small ? encoder.encodeInto(input, shared).written : buf.length;
 
 	let edits = false,
 		next: number,
@@ -125,7 +46,7 @@ function bytes(input: string): string {
 		w = 0;
 
 	// BOM
-	if (buf[0] === 239 && buf[1] === 187 && buf[2] === 191) {
+	if (size > 2 && buf[0] === 239 && buf[1] === 187 && buf[2] === 191) {
 		buf[0] = 32;
 		from = i = 3;
 		w = 1;
@@ -135,6 +56,7 @@ function bytes(input: string): string {
 	for (; i < size; i++) {
 		c = buf[i];
 
+		// track string state
 		// '"'
 		if (c === 34) {
 			for (i++; i < size; i++) {
@@ -156,7 +78,7 @@ function bytes(input: string): string {
 					for (j += 2; j < size && (c = buf[j]) !== 10 && c !== 13; j++);
 				} else if (next === 42) {
 					for (
-						j = j + 2;
+						j += 2;
 						j < size - 1 && !(buf[j] === 42 && buf[j + 1] === 47);
 						j++
 					);
@@ -220,20 +142,10 @@ function bytes(input: string): string {
 	if (!edits) return input;
 	if (w !== from) buf.copyWithin(w, from, size);
 	w += size - from;
-	return decoder.decode(w === size ? buf : buf.subarray(0, w));
-}
-
-/**
- * Converts JSONC (JSON with comments) to valid JSON per RFC8259.
- * Preserves line breaks and positions to maintain correct error reporting offsets.
- * @param input - The source JSONC string
- * @source https://github.com/tidwall/jsonc (MIT)
- * @returns Valid JSON string with comments stripped and trailing commas removed
- * @example
- * toJSON('{ "a": 1, // one\n}'); //=> '{ "a": 1        \n}'
- */
-export function toJSON(input: string): string {
-	return input.length < 2048 ? slices(input) : bytes(input);
+	let output = decoder.decode(w === buf.length ? buf : buf.subarray(0, w));
+	return size === input.length || input.isWellFormed()
+		? output
+		: restore(input, output);
 }
 
 /**
