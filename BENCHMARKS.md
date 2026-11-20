@@ -33,59 +33,59 @@ All fixtures are in `fixtures.ts`.
 
 ## Results
 
-Results for commit `f2f5d47` on branch `dev/u8`. The CPUs were 97–98% idle for all runs. "Faster" is npm divided by local.
+Results for commit `bc13505` on branch `dev/u8`. The CPUs were 94–98% idle for all runs. "Faster" is npm divided by local.
 
-`toJSON` has two scanners. Inputs under 2048 chars use the slice scanner (`small` here). Longer inputs use the byte scanner, which encodes to a `Uint8Array`, writes spaces in place, and decodes once.
+`toJSON` has one scanner. It encodes the input to UTF-8 bytes, writes spaces in place, and decodes once. Inputs of up to 5461 chars encode into one fixed 16 KB module-level buffer; larger inputs get their own buffer from `TextEncoder.encode()`.
 
 ### Speed: `parse`
 
 | fixture | bun local | bun npm:jsonc | faster | node local | node npm:jsonc | faster |
 | ------- | --------- | ------------- | ------ | ---------- | -------------- | ------ |
-| small   | 593 ns    | 8.50 µs       | 14.3x  | 1.10 µs    | 3.73 µs        | 3.4x   |
-| medium  | 36.4 µs   | 889 µs        | 24.4x  | 51.8 µs    | 332 µs         | 6.4x   |
-| large   | 1.67 ms   | 79.5 ms       | 47.6x  | 2.97 ms    | 21.5 ms        | 7.2x   |
-| plain   | 1.37 ms   | 49.0 ms       | 35.8x  | 2.49 ms    | 17.3 ms        | 6.9x   |
-| dense   | 2.31 ms   | 117.3 ms      | 50.8x  | 3.44 ms    | 43.0 ms        | 12.5x  |
-| unicode | 1.98 ms   | 43.6 ms       | 22.0x  | 3.10 ms    | 15.6 ms        | 5.0x   |
+| small   | 440 ns    | 8.63 µs       | 19.6x  | 974 ns     | 3.79 µs        | 3.9x   |
+| medium  | 35.6 µs   | 907 µs        | 25.5x  | 57.0 µs    | 343 µs         | 6.0x   |
+| large   | 1.69 ms   | 80.8 ms       | 47.8x  | 3.12 ms    | 22.1 ms        | 7.1x   |
+| plain   | 1.44 ms   | 49.9 ms       | 34.7x  | 2.78 ms    | 17.7 ms        | 6.4x   |
+| dense   | 2.34 ms   | 125.6 ms      | 53.7x  | 3.74 ms    | 42.8 ms        | 11.5x  |
+| unicode | 1.88 ms   | 49.9 ms       | 26.5x  | 2.86 ms    | 15.2 ms        | 5.3x   |
 
 ### Speed: `toJSON`
 
 | fixture | bun local | bun strip-json-comments | faster | node local | node strip-json-comments | faster |
 | ------- | --------- | ----------------------- | ------ | ---------- | ------------------------ | ------ |
-| small   | 348 ns    | 7.80 µs                 | 22.4x  | 456 ns     | 2.58 µs                  | 5.7x   |
-| medium  | 18.8 µs   | 912 µs                  | 48.6x  | 23.5 µs    | 306 µs                   | 13.1x  |
-| large   | 941 µs    | 52.2 ms                 | 55.5x  | 1.25 ms    | 17.0 ms                  | 13.6x  |
-| plain   | 595 µs    | 41.5 ms                 | 69.7x  | 855 µs     | 14.4 ms                  | 16.8x  |
-| dense   | 1.88 ms   | 96.6 ms                 | 51.4x  | 2.18 ms    | 40.6 ms                  | 18.6x  |
-| unicode | 1.26 ms   | 36.7 ms                 | 29.1x  | 1.98 ms    | 14.0 ms                  | 7.1x   |
+| small   | 282 ns    | 7.79 µs                 | 27.6x  | 328 ns     | 2.66 µs                  | 8.1x   |
+| medium  | 16.9 µs   | 833 µs                  | 49.2x  | 23.4 µs    | 298 µs                   | 12.8x  |
+| large   | 805 µs    | 51.1 ms                 | 63.4x  | 1.25 ms    | 17.7 ms                  | 14.1x  |
+| plain   | 483 µs    | 43.6 ms                 | 90.2x  | 865 µs     | 14.6 ms                  | 16.8x  |
+| dense   | 1.46 ms   | 98.4 ms                 | 67.4x  | 2.33 ms    | 39.3 ms                  | 16.9x  |
+| unicode | 1.25 ms   | 34.8 ms                 | 27.9x  | 1.97 ms    | 14.1 ms                  | 7.2x   |
 
 ### Memory: bytes allocated per call (node)
 
-From V8's `total_allocated_bytes` counter. Bun has no such counter. The counter does not see the `Uint8Array` storage of the byte scanner, and it does not seem to see the decoded output string either (`dense` shows 22 KB for a 1.2 MB output). So for inputs of 2048 chars or more, the local values are too low; use the peak values below.
+From V8's `total_allocated_bytes` counter. Bun has no such counter. The counter does not see `Uint8Array` storage, and it does not seem to see the decoded output string either (`dense` shows 22 KB for a 1.2 MB output). So the local values are too low; use the peak values below.
 
 | fixture | parse local | parse npm:jsonc | toJSON local | toJSON strip-json-comments |
 | ------- | ----------- | --------------- | ------------ | -------------------------- |
-| small   | 1012 B      | 7.2 KB          | 725 B        | 6.6 KB                     |
-| medium  | 44.7 KB     | 742 KB          | 22.7 KB      | 697 KB                     |
+| small   | 796 B       | 7.2 KB          | 444 B        | 6.6 KB                     |
+| medium  | 50.2 KB     | 742 KB          | 19.3 KB      | 697 KB                     |
 | large   | 2.05 MB     | 36.0 MB         | 895 KB       | 34.0 MB                    |
 | plain   | 1.19 MB     | 29.3 MB         | 2.9 KB       | 27.3 MB                    |
-| dense   | 951 KB      | 64.2 MB         | 22.0 KB      | 62.1 MB                    |
+| dense   | 944 KB      | 64.2 MB         | 22.1 KB      | 62.1 MB                    |
 | unicode | 2.08 MB     | 30.1 MB         | 1.20 MB      | 28.0 MB                    |
 
 ### Memory: extra peak RSS for one call
 
-One call in a fresh process, minus a process that only reads the input. Median of 5 runs. On Linux this uses `VmHWM`, because `maxRSS` is inherited from the parent process across exec. Differences under a few MB are noise.
+One call in a fresh process, minus a process that only reads the input. Every version is loaded in every process, so all share one baseline. Median of 7 runs. On Linux this uses `VmHWM`, because `maxRSS` is inherited from the parent process across exec. Differences under a few MB are noise.
 
 | fixture | runtime | parse local | parse npm:jsonc | toJSON local | toJSON strip-json-comments |
 | ------- | ------- | ----------- | --------------- | ------------ | -------------------------- |
-| large   | bun     | 9.7 MB      | 41.8 MB         | 7.3 MB       | 40.0 MB                    |
-| large   | node    | 3.9 MB      | 24.2 MB         | 2.9 MB       | 23.2 MB                    |
-| plain   | bun     | 7.3 MB      | 37.6 MB         | 5.1 MB       | 34.8 MB                    |
-| plain   | node    | 2.7 MB      | 15.3 MB         | 2.1 MB       | 13.1 MB                    |
-| dense   | bun     | 11.9 MB     | 45.9 MB         | 10.3 MB      | 44.6 MB                    |
-| dense   | node    | 3.9 MB      | 31.2 MB         | 3.7 MB       | 29.1 MB                    |
-| unicode | bun     | 9.5 MB      | 42.5 MB         | 7.6 MB       | 40.5 MB                    |
-| unicode | node    | 4.2 MB      | 20.4 MB         | 3.8 MB       | 18.8 MB                    |
+| large   | bun     | 9.5 MB      | 40.7 MB         | 7.4 MB       | 38.6 MB                    |
+| large   | node    | 3.7 MB      | 23.4 MB         | 2.8 MB       | 22.6 MB                    |
+| plain   | bun     | 7.4 MB      | 36.7 MB         | 5.2 MB       | 34.2 MB                    |
+| plain   | node    | 2.9 MB      | 15.1 MB         | 2.1 MB       | 13.1 MB                    |
+| dense   | bun     | 12.0 MB     | 45.6 MB         | 10.1 MB      | 44.2 MB                    |
+| dense   | node    | 3.5 MB      | 30.6 MB         | 3.3 MB       | 28.4 MB                    |
+| unicode | bun     | 9.2 MB      | 42.2 MB         | 7.4 MB       | 40.6 MB                    |
+| unicode | node    | 3.9 MB      | 20.2 MB         | 3.6 MB       | 18.0 MB                    |
 
 ## History
 
@@ -146,6 +146,32 @@ Tuning steps:
 - Threshold 2048 chars: node's `TextEncoder` costs about 1 µs per call. With 512, ASCII input was already faster on node, but non-ASCII input under about 2000 chars was up to 2x slower. At 2048 the byte scanner is faster for both on bun and node.
 - `encode()`, not `encodeInto()` into a buffer of input length: on bun, `encodeInto` into a buffer too small for non-ASCII input took 1.36 ms on `unicode`, against 0.17 ms for `encode()`.
 
+### Single scanner (`dev/u8`)
+
+`bc13505` drops the slice scanner, so `toJSON` has one scanner for all inputs. `toJSON`, with each version in its own process, CPUs 87–98% idle. "two" is `96dd167`, the two-scanner version. Values are bun / node.
+
+| input          | main             | two            | single         |
+| -------------- | ---------------- | -------------- | -------------- |
+| small (191)    | 320 / 484 ns     | 356 / 471 ns   | 256 / 249 ns   |
+| ASCII 715      | 1.29 / 2.09 µs   | 1.34 / 2.16 µs | 0.78 / 0.89 µs |
+| ASCII 2851     | 4.72 / 8.54 µs   | 2.84 / 4.36 µs | 2.78 / 3.07 µs |
+| non-ASCII 181  | 348 / 558 ns     | 341 / 587 ns   | 392 / 365 ns   |
+| non-ASCII 2851 | 4.62 / 8.32 µs   | 3.38 / 4.32 µs | 3.20 / 3.11 µs |
+| medium         | 32.7 / 52.4 µs   | 19.5 / 18.0 µs | 18.1 / 19.7 µs |
+| large          | 1.44 / 2.42 ms   | 0.84 / 0.90 ms | 0.87 / 0.98 ms |
+| plain          | 619 µs / 1.03 ms | 597 / 554 µs   | 613 / 621 µs   |
+| dense          | 3.51 / 6.44 ms   | 1.73 / 1.86 ms | 1.65 / 2.00 ms |
+| unicode        | 1.17 / 2.49 ms   | 1.31 / 1.94 ms | 1.18 / 1.95 ms |
+
+On node, the single scanner is 8–12% slower than "two" on large ASCII inputs. The code path for those inputs is the same in both, apart from the encode branch; the gap went from 12–49% to 8–12% with the BOM fix below, and no other change closed it. Peak RSS is the same as "two" within ±0.3 MB.
+
+Steps:
+
+- Reuse one fixed 16 KB buffer for inputs of up to 5461 chars (3 bytes per char at most). On node, `new Uint8Array(191)` costs about 1.07 µs, against under 1 ns on bun. `TextEncoder.encode()` and `encodeInto()` into a new buffer cost about the same, so the allocation was the cost, not the encoding.
+- Use the default `TextDecoder`: `ignoreBOM: true` cost 127 ns against 54 ns on node for 191 bytes. The output never starts with U+FEFF, because a leading BOM becomes a space.
+- Lone surrogates: `TextEncoder` writes each as U+FFFD, which is also one UTF-16 unit, so output positions still match the input. `restore()` puts the input's surrogates back, only when `isWellFormed()` is false.
+- Check for a BOM in the buffer, not with `input.charCodeAt(0)`: on node, the string read made large inputs 10–25% slower.
+
 ### Rejected
 
 | change                                                                                                   | result                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -153,5 +179,6 @@ Tuning steps:
 | Blank comments with a regex replace of character runs instead of single characters                       | Slower on node, mixed on bun.                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Skip strings with `indexOf('"')` instead of a character loop                                             | 4–14% slower on short strings, 6.5x (bun) and 8.5x (node) faster on strings of about 540 characters. Most JSONC input is config with short strings.                                                                                                                                                                                                                                                                                                   |
 | Fall back to the slice scanner for non-ASCII input under 2048 chars, with a 512-char threshold for ASCII | The wasted partial `encodeInto` cost more than it saved: node non-ASCII 1071 chars went 3.66 → 4.44 µs, against 3.06 µs for the slice scanner.                                                                                                                                                                                                                                                                                                        |
-| Drop `ignoreBOM: true` from the decoder                                                                  | No gain beyond noise. Kept, so a leading U+FEFF in the output can never be stripped.                                                                                                                                                                                                                                                                                                                                                                  |
+| Fill the buffer with a `charCodeAt` loop for small ASCII inputs, instead of `TextEncoder`                | Slower than `TextEncoder` on both runtimes (node 191 chars: 1.69 µs against 1.31 µs). The cost on node was the buffer allocation, not the encoder.                                                                                                                                                                                                                                                                                                    |
+| Drop `ignoreBOM: true` from the decoder (two-scanner version)                                            | No gain beyond noise at that time. The single scanner drops it, because of its cost on small inputs.                                                                                                                                                                                                                                                                                                                                                  |
 | Reuse one module-level parts array across calls                                                          | `length = 0` frees the backing store in V8, so allocation did not change. Writing by index, then `fill("")` after `join`, cut node allocations on repeated input (large 4.38 → 2.61 MB, dense 9.51 → 5.43 MB). But `length = n` shrinks the array when input size changes, so large and small inputs in turn saved only 4.41 → 4.19 MB. Speed changed by −13% (node small) to +9% (dense). The array also keeps its largest size alive between calls. |
