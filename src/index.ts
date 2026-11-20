@@ -26,7 +26,6 @@ function restore(input: string, output: string): string {
  * Converts JSONC (JSON with comments) to valid JSON per RFC8259.
  * Preserves line breaks and positions to maintain correct error reporting offsets.
  * @param input - The source JSONC string
- * @source https://github.com/tidwall/jsonc (MIT)
  * @returns Valid JSON string with comments stripped and trailing commas removed
  * @example
  * toJSON('{ "a": 1, // one\n}'); //=> '{ "a": 1        \n}'

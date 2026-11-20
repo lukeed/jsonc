@@ -104,10 +104,8 @@ toJSON :: 625 KB non-ASCII input           Bun      Node           Memory
   strip-json-comments                 34.83 ms  14.13 ms   40.6 / 18.0 MB
 ```
 
-## Credits
-
-Based on [tidwall/jsonc](https://github.com/tidwall/jsonc) (MIT).
-
 ## License
 
 MIT © [Luke Edwards](https://lukeed.com)
+
+Originally inspired by [tidwall/jsonc](https://github.com/tidwall/jsonc)
